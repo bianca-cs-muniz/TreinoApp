@@ -1,0 +1,27 @@
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "module": "commonjs",
+    "moduleResolution": "node",
+    "outDir": "dist",
+    "rootDir": "src",
+    "strict": true,
+    "experimentalDecorators": true,
+    "emitDecoratorMetadata": true,
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": true,
+    "resolveJsonModule": true,
+    "baseUrl": ".",
+    "paths": {
+      "@decorators/*": ["src/utils/decorators/*"],
+      "@abstracts/*": ["src/utils/abstracts/*"],
+      "@dtos/*": ["src/utils/dtos/*"],
+      "@errors/*": ["src/errors/*"],
+      "@database/*": ["src/database/*"],
+      "@middlewares/*": ["src/middlewares/*"],
+      "@libs/*": ["src/libs/*"]
+    }
+  },
+  "include": ["src"]
+}

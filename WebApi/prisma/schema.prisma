@@ -1,0 +1,104 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// "goal" fica como string livre (validado em app code: WebApp GOALS, WebApi authService.VALID_GOALS)
+// em vez de enum do Postgres, pra não precisar de migration toda vez que a lista de objetivos mudar.
+model User {
+  id        String           @id @default(cuid())
+  email     String           @unique
+  password  String
+  name      String
+  goal      String?
+  age       Int?
+  weightKg  Float?
+  heightCm  Float?
+  workouts  Workout[]
+  sessions  WorkoutSession[]
+  createdAt DateTime         @default(now())
+}
+
+// ── Treino planejado (o "molde") ────────────────────────────────────────────
+model Workout {
+  id        String            @id @default(cuid())
+  userId    String
+  user      User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  name      String            // ex: "Treino de Segunda"
+  weekDay   Int?              // 0-6, opcional
+  active    Boolean           @default(true) // "excluir" só inativa — preserva o histórico de sessões
+  exercises WorkoutExercise[]
+  sessions  WorkoutSession[]  // histórico de execuções desse treino
+  createdAt DateTime          @default(now())
+  updatedAt DateTime          @updatedAt
+
+  @@index([userId])
+}
+
+model WorkoutExercise {
+  id            String   @id @default(cuid())
+  workoutId     String
+  workout       Workout  @relation(fields: [workoutId], references: [id], onDelete: Cascade)
+  name          String
+  externalApiId String?  // id do exercício na API externa (wger), pra buscar o gif/vídeo
+  restSec       Int?     // tempo de descanso entre séries, opcional (ex: 5-300s)
+  order         Int      @default(0)
+  sets          Set[]
+
+  @@index([workoutId])
+}
+
+// Série do template — o que foi CADASTRADO (kg, reps ou tempo).
+// Não guarda estado de "concluído": isso é por sessão, ver SetLog.
+model Set {
+  id                String          @id @default(cuid())
+  workoutExerciseId String
+  workoutExercise   WorkoutExercise @relation(fields: [workoutExerciseId], references: [id], onDelete: Cascade)
+  order             Int             @default(0)
+  weightKg          Float?
+  reps              Int?            // null se for por tempo (ex: prancha)
+  durationSec       Int?
+  logs              SetLog[]
+
+  @@index([workoutExerciseId])
+}
+
+// ── Execução (o histórico real de quando o treino foi feito) ───────────────
+model WorkoutSession {
+  id          String    @id @default(cuid())
+  userId      String
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  workoutId   String
+  workout     Workout   @relation(fields: [workoutId], references: [id], onDelete: Cascade)
+  startedAt   DateTime  @default(now())
+  finishedAt  DateTime?
+  durationSec Int?      // preenchido ao "Finalizar treino"
+  photoUrl    String?
+  comment     String?
+  setLogs     SetLog[]
+  createdAt   DateTime  @default(now())
+
+  @@index([userId, startedAt]) // consulta principal do heatmap/relatório
+  @@index([workoutId])
+}
+
+// Série executada dentro de uma sessão — referencia o Set-molde,
+// mas guarda os valores realmente feitos e se foi concluída.
+model SetLog {
+  id               String         @id @default(cuid())
+  workoutSessionId String
+  workoutSession   WorkoutSession @relation(fields: [workoutSessionId], references: [id], onDelete: Cascade)
+  setId            String
+  set              Set            @relation(fields: [setId], references: [id], onDelete: Cascade)
+  weightKg         Float?
+  reps             Int?
+  durationSec      Int?
+  completed        Boolean        @default(false)
+  completedAt      DateTime?
+
+  @@index([workoutSessionId])
+}

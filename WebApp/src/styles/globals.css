@@ -1,0 +1,29 @@
+:root {
+  color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  font-family: "Inter", system-ui, -apple-system, sans-serif;
+  background: #14171c;
+  color: #edeae3;
+}
+
+::placeholder {
+  color: #75797f;
+}
+
+input:focus,
+select:focus {
+  outline: none;
+}
+
+a {
+  color: #ff5a36;
+}
+
+a:hover {
+  color: #ff7a5c;
+}
