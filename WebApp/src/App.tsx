@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider } from "./context/AuthContext";
 import { useAuth } from "./hooks/useAuth";
@@ -37,6 +38,14 @@ function AppRoutes() {
 }
 
 export default function App() {
+  useEffect(() => {
+    // o backend gratuito "dorme" depois de 15min sem uso — dispara uma chamada
+    // leve assim que o app abre pra ele já começar a acordar em paralelo,
+    // antes de qualquer tela realmente precisar de dados.
+    const apiUrl = import.meta.env.VITE_API_URL || "http://localhost:3001";
+    fetch(`${apiUrl}/exercises/search?term=a`).catch(() => {});
+  }, []);
+
   return (
     <AuthProvider>
       <BrowserRouter>

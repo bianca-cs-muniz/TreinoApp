@@ -9,7 +9,13 @@ import MainService from "../service";
 export function controllerMain() {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
-  const { treinos, carregandoTreinos, removerTreino: removerTreinoDoServico } = useWorkouts();
+  const {
+    treinos,
+    carregandoTreinos,
+    erroTreinos,
+    recarregarTreinos,
+    removerTreino: removerTreinoDoServico,
+  } = useWorkouts();
 
   const [datasSessoes, setDatasSessoes] = useState<Set<string>>(new Set());
 
@@ -68,6 +74,8 @@ export function controllerMain() {
     logout,
     treinos,
     carregandoTreinos,
+    erroTreinos,
+    recarregarTreinos,
     imc,
     zonaImc,
     diasHeatmap,

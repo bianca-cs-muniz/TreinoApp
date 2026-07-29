@@ -21,6 +21,30 @@ export interface EstadoDescanso {
   totalSeg: number;
 }
 
+function tocarBipDescanso() {
+  try {
+    const AudioContextClasse = window.AudioContext || (window as any).webkitAudioContext;
+    const contexto = new AudioContextClasse();
+    const osc = contexto.createOscillator();
+    const ganho = contexto.createGain();
+    osc.type = "sine";
+    osc.frequency.value = 880;
+    ganho.gain.setValueAtTime(0.2, contexto.currentTime);
+    ganho.gain.exponentialRampToValueAtTime(0.001, contexto.currentTime + 0.5);
+    osc.connect(ganho);
+    ganho.connect(contexto.destination);
+    osc.start();
+    osc.stop(contexto.currentTime + 0.5);
+  } catch {
+    // navegador sem suporte a Web Audio — segue sem som.
+  }
+}
+
+function notificarFimDescanso() {
+  if (typeof Notification === "undefined" || Notification.permission !== "granted") return;
+  new Notification("Descanso terminado", { body: "Hora de continuar a série!" });
+}
+
 export function controllerComecarTreino() {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -77,9 +101,36 @@ export function controllerComecarTreino() {
     return () => clearInterval(interval);
   }, [cronometroRodando, sessao?.finishedAt]);
 
+  // no PWA/iOS o JS para de rodar quando a tela trava ou o app vai pra segundo plano —
+  // o setInterval acima fica "atrasado". Ao voltar, recalcula o tempo real a partir de
+  // startedAt em vez de confiar no contador local (só se o cronômetro não estava pausado).
+  useEffect(() => {
+    function recalcularSegundosDecorridos() {
+      if (!sessao || sessao.finishedAt || !cronometroRodando) return;
+      const decorrido = Math.floor((Date.now() - new Date(sessao.startedAt).getTime()) / 1000);
+      setSegundosDecorridos(Math.max(decorrido, 0));
+    }
+
+    function aoMudarVisibilidade() {
+      if (document.visibilityState === "visible") recalcularSegundosDecorridos();
+    }
+
+    document.addEventListener("visibilitychange", aoMudarVisibilidade);
+    window.addEventListener("pageshow", recalcularSegundosDecorridos);
+    window.addEventListener("focus", recalcularSegundosDecorridos);
+
+    return () => {
+      document.removeEventListener("visibilitychange", aoMudarVisibilidade);
+      window.removeEventListener("pageshow", recalcularSegundosDecorridos);
+      window.removeEventListener("focus", recalcularSegundosDecorridos);
+    };
+  }, [sessao, cronometroRodando]);
+
   useEffect(() => {
     if (!descanso) return;
     if (descanso.segundosRestantes <= 0) {
+      tocarBipDescanso();
+      notificarFimDescanso();
       setDescanso(null);
       return;
     }
@@ -88,6 +139,10 @@ export function controllerComecarTreino() {
     }, 1000);
     return () => clearTimeout(timeout);
   }, [descanso]);
+
+  function pularDescanso() {
+    setDescanso(null);
+  }
 
   async function iniciarTreino() {
     if (!treino || iniciando) return;
@@ -118,16 +173,25 @@ export function controllerComecarTreino() {
   async function alternarConcluidoSerie(log: ISetLog, restSec: number | null) {
     if (!sessao) return;
     const completed = !log.completed;
+
+    // marca na hora (otimista) — não espera o servidor responder pra sentir instantâneo.
+    atualizarSetLogNaSessao({ ...log, completed, completedAt: completed ? new Date().toISOString() : null });
+    if (completed && restSec) {
+      setDescanso({ setLogId: log.id, segundosRestantes: restSec, totalSeg: restSec });
+      if (typeof Notification !== "undefined" && Notification.permission === "default") {
+        Notification.requestPermission().catch(() => {});
+      }
+    } else if (!completed && descanso?.setLogId === log.id) {
+      setDescanso(null);
+    }
+
     try {
       const atualizado = await ComecarTreinoService.atualizarSetLog(sessao.id, log.id, { completed });
       atualizarSetLogNaSessao(atualizado);
-      if (completed && restSec) {
-        setDescanso({ setLogId: log.id, segundosRestantes: restSec, totalSeg: restSec });
-      } else if (!completed && descanso?.setLogId === log.id) {
-        setDescanso(null);
-      }
-    } catch {
-      // erro silencioso
+    } catch (err: any) {
+      atualizarSetLogNaSessao(log); // reverte pro estado anterior
+      if (completed && restSec) setDescanso(null);
+      setErroSnackbar(err?.message || "Não foi possível marcar a série. Tente novamente.");
     }
   }
 
@@ -136,8 +200,8 @@ export function controllerComecarTreino() {
     try {
       const atualizado = await ComecarTreinoService.atualizarSetLog(sessao.id, log.id, patch);
       atualizarSetLogNaSessao(atualizado);
-    } catch {
-      // erro silencioso
+    } catch (err: any) {
+      setErroSnackbar(err?.message || "Não foi possível salvar. Tente novamente.");
     }
   }
 
@@ -174,6 +238,7 @@ export function controllerComecarTreino() {
     cronometroRodando,
     setCronometroRodando,
     descanso,
+    pularDescanso,
     finalizando,
     mostrarModalFinalizar,
     setMostrarModalFinalizar,

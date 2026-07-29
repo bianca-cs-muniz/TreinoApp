@@ -44,7 +44,6 @@ export const LinkEditarTreino = styled(Link)`
 `;
 
 export const CartaoCronometro = styled(Box)`
-  margin-top: 14px;
   background: #1d2129;
   border: 1px solid #2e333c;
   border-radius: 12px;
@@ -221,13 +220,34 @@ export const BotaoConcluirSerie = styled(Box, {
   justify-content: center;
 `;
 
+// fixo na tela (não precisa rolar até o fim da lista de exercícios pra ver
+// o cronômetro/descanso/botão) — respeita a área segura do iPhone embaixo.
 export const RodapeFixoExecucao = styled(Box)`
-  padding-top: 16px;
-  margin-top: 22px;
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  display: flex;
+  justify-content: center;
+  background: #181b21;
+  border-top: 1px solid #2e333c;
+  padding: 12px 16px calc(12px + env(safe-area-inset-bottom, 0px));
+  z-index: 30;
+`;
+
+export const RodapeFixoConteudo = styled(Box)`
+  width: 100%;
+  max-width: 420px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+`;
+
+export const EspacadorRodape = styled(Box)`
+  height: 220px;
 `;
 
 export const CartaoDescanso = styled(Box)`
-  margin-bottom: 12px;
   background: #14171c;
   border: 1px solid #2e333c;
   border-radius: 10px;
@@ -236,6 +256,17 @@ export const CartaoDescanso = styled(Box)`
   flex-direction: column;
   align-items: center;
   gap: 10px;
+`;
+
+export const BotaoPularDescanso = styled("button")`
+  border: none;
+  background: none;
+  color: #9a9890;
+  font-size: 12px;
+  font-weight: 600;
+  text-decoration: underline;
+  cursor: pointer;
+  padding: 4px;
 `;
 
 export const RotuloDescansoTitulo = styled(Typography)`

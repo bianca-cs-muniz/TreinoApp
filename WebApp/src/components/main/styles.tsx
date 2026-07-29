@@ -227,3 +227,32 @@ export const BotaoCadastrarPrimeiro = styled("button")`
   font-family: "Inter", sans-serif;
   cursor: pointer;
 `;
+
+export const EstadoCarregandoTreinos = styled(Box)`
+  margin-top: 22px;
+  text-align: center;
+  padding: 24px 12px;
+`;
+
+export const TextoCarregando = styled(Typography)`
+  font-size: 13px;
+  color: #9a9890;
+`;
+
+export const TextoErroTreinos = styled(Typography)`
+  font-size: 13px;
+  color: #d64545;
+  margin-bottom: 12px;
+`;
+
+export const BotaoTentarNovamente = styled("button")`
+  padding: 10px 18px;
+  border-radius: 8px;
+  border: 1px solid #2e333c;
+  background: none;
+  color: #ff5a36;
+  font-size: 13px;
+  font-weight: 700;
+  font-family: "Inter", sans-serif;
+  cursor: pointer;
+`;

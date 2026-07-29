@@ -3,7 +3,17 @@ import { controllerMain } from "./controller";
 import { CartaoImcMain } from "./components/cartaoImc";
 import { CartaoProgressoMain } from "./components/cartaoProgresso";
 import { ListaTreinosMain } from "./components/listaTreinos";
-import { BotaoSair, CabecalhoMain, LinhaCartoes, SaudacaoUsuario, TituloMain } from "./styles";
+import {
+  BotaoSair,
+  BotaoTentarNovamente,
+  CabecalhoMain,
+  EstadoCarregandoTreinos,
+  LinhaCartoes,
+  SaudacaoUsuario,
+  TextoCarregando,
+  TextoErroTreinos,
+  TituloMain,
+} from "./styles";
 
 export const MainPage = () => {
   const {
@@ -11,6 +21,8 @@ export const MainPage = () => {
     logout,
     treinos,
     carregandoTreinos,
+    erroTreinos,
+    recarregarTreinos,
     imc,
     zonaImc,
     diasHeatmap,
@@ -38,7 +50,20 @@ export const MainPage = () => {
           <CartaoProgressoMain onClick={irParaProgresso} diasEsteMes={diasEsteMes} diasHeatmap={diasHeatmap} />
         </LinhaCartoes>
 
-        {!carregandoTreinos && (
+        {carregandoTreinos && (
+          <EstadoCarregandoTreinos>
+            <TextoCarregando>Carregando seus treinos...</TextoCarregando>
+          </EstadoCarregandoTreinos>
+        )}
+
+        {!carregandoTreinos && erroTreinos && (
+          <EstadoCarregandoTreinos>
+            <TextoErroTreinos>{erroTreinos}</TextoErroTreinos>
+            <BotaoTentarNovamente onClick={recarregarTreinos}>Tentar novamente</BotaoTentarNovamente>
+          </EstadoCarregandoTreinos>
+        )}
+
+        {!carregandoTreinos && !erroTreinos && (
           <ListaTreinosMain
             treinos={treinos}
             aoAbrirTreino={abrirTreino}

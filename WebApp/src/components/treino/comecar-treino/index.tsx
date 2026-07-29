@@ -12,14 +12,17 @@ import {
   BotaoAcaoPrincipal,
   BotaoAlternarModo,
   BotaoCronometro,
+  BotaoPularDescanso,
   CabecalhoTreino,
   CarregandoTexto,
   CartaoCronometro,
   CartaoDescanso,
+  EspacadorRodape,
   LinhaSuperiorCabecalho,
   LinkEditarTreino,
   ListaExerciciosTreino,
   PreenchimentoBarraDescanso,
+  RodapeFixoConteudo,
   RodapeFixoExecucao,
   RotuloDescansoTitulo,
   TituloTreino,
@@ -39,6 +42,7 @@ export const ComecarTreinoPage = () => {
     cronometroRodando,
     setCronometroRodando,
     descanso,
+    pularDescanso,
     finalizando,
     mostrarModalFinalizar,
     setMostrarModalFinalizar,
@@ -84,16 +88,6 @@ export const ComecarTreinoPage = () => {
           <TituloTreino>{treino.name}</TituloTreino>
         </CabecalhoTreino>
 
-        {sessao && (
-          <CartaoCronometro>
-            <ValorCronometro>{formatarMMSS(segundosDecorridos)}</ValorCronometro>
-            <BotaoCronometro $rodando={cronometroRodando} onClick={() => setCronometroRodando(!cronometroRodando)}>
-              {cronometroRodando ? <PauseIcon sx={{ fontSize: 18 }} /> : <PlayArrowIcon sx={{ fontSize: 18 }} />}
-              {cronometroRodando ? "Pausar" : "Retomar"}
-            </BotaoCronometro>
-          </CartaoCronometro>
-        )}
-
         <ListaExerciciosTreino>
           {treino.exercises.map((ex) => (
             <ExercicioExecucaoCard
@@ -109,26 +103,46 @@ export const ComecarTreinoPage = () => {
           ))}
         </ListaExerciciosTreino>
 
-        <RodapeFixoExecucao>
-          {descanso && (
-            <CartaoDescanso>
-              <RotuloDescansoTitulo>DESCANSO</RotuloDescansoTitulo>
-              <ValorDescanso>{formatarMMSS(descanso.segundosRestantes)}</ValorDescanso>
-              <BarraProgressoDescanso>
-                <PreenchimentoBarraDescanso
-                  style={{ width: `${(descanso.segundosRestantes / descanso.totalSeg) * 100}%` }}
-                />
-              </BarraProgressoDescanso>
-            </CartaoDescanso>
-          )}
+        <EspacadorRodape />
 
-          {!sessao ? (
-            <BotaoAcaoPrincipal onClick={iniciarTreino} disabled={iniciando}>
-              {iniciando ? "Iniciando..." : "Começar treino"}
-            </BotaoAcaoPrincipal>
-          ) : (
-            <BotaoAcaoPrincipal onClick={() => setMostrarModalFinalizar(true)}>Finalizar treino</BotaoAcaoPrincipal>
-          )}
+        <RodapeFixoExecucao>
+          <RodapeFixoConteudo>
+            {sessao && (
+              <CartaoCronometro>
+                <ValorCronometro>{formatarMMSS(segundosDecorridos)}</ValorCronometro>
+                <BotaoCronometro
+                  $rodando={cronometroRodando}
+                  onClick={() => setCronometroRodando(!cronometroRodando)}
+                >
+                  {cronometroRodando ? <PauseIcon sx={{ fontSize: 18 }} /> : <PlayArrowIcon sx={{ fontSize: 18 }} />}
+                  {cronometroRodando ? "Pausar" : "Retomar"}
+                </BotaoCronometro>
+              </CartaoCronometro>
+            )}
+
+            {descanso && (
+              <CartaoDescanso>
+                <RotuloDescansoTitulo>DESCANSO</RotuloDescansoTitulo>
+                <ValorDescanso>{formatarMMSS(descanso.segundosRestantes)}</ValorDescanso>
+                <BarraProgressoDescanso>
+                  <PreenchimentoBarraDescanso
+                    style={{ width: `${(descanso.segundosRestantes / descanso.totalSeg) * 100}%` }}
+                  />
+                </BarraProgressoDescanso>
+                <BotaoPularDescanso onClick={pularDescanso}>Pular descanso</BotaoPularDescanso>
+              </CartaoDescanso>
+            )}
+
+            {!sessao ? (
+              <BotaoAcaoPrincipal onClick={iniciarTreino} disabled={iniciando}>
+                {iniciando ? "Iniciando..." : "Começar treino"}
+              </BotaoAcaoPrincipal>
+            ) : (
+              <BotaoAcaoPrincipal onClick={() => setMostrarModalFinalizar(true)}>
+                Finalizar treino
+              </BotaoAcaoPrincipal>
+            )}
+          </RodapeFixoConteudo>
         </RodapeFixoExecucao>
 
         {mostrarModalFinalizar && (
