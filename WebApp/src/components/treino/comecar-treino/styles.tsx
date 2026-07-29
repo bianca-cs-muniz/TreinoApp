@@ -44,6 +44,7 @@ export const LinkEditarTreino = styled(Link)`
 `;
 
 export const CartaoCronometro = styled(Box)`
+  margin-top: 14px;
   background: #1d2129;
   border: 1px solid #2e333c;
   border-radius: 12px;
@@ -243,48 +244,44 @@ export const RodapeFixoConteudo = styled(Box)`
   gap: 10px;
 `;
 
-export const EspacadorRodape = styled(Box)`
-  height: 220px;
-`;
-
 export const CartaoDescanso = styled(Box)`
   background: #14171c;
   border: 1px solid #2e333c;
   border-radius: 10px;
-  padding: 16px;
+  padding: 10px 14px;
   display: flex;
   flex-direction: column;
+  gap: 8px;
+`;
+
+export const LinhaInferiorDescanso = styled(Box)`
+  display: flex;
   align-items: center;
-  gap: 10px;
+  justify-content: space-between;
+  gap: 12px;
 `;
 
 export const BotaoPularDescanso = styled("button")`
   border: none;
-  background: none;
-  color: #9a9890;
+  border-radius: 8px;
+  background: #2e333c;
+  color: #edeae3;
   font-size: 12px;
-  font-weight: 600;
-  text-decoration: underline;
+  font-weight: 700;
   cursor: pointer;
-  padding: 4px;
-`;
-
-export const RotuloDescansoTitulo = styled(Typography)`
-  font-size: 11px;
-  color: #9a9890;
-  letter-spacing: 0.5px;
+  padding: 8px 14px;
 `;
 
 export const ValorDescanso = styled(Typography)`
   font-family: "JetBrains Mono", monospace;
-  font-size: 36px;
+  font-size: 22px;
   font-weight: 700;
   color: #ff5a36;
 `;
 
 export const BarraProgressoDescanso = styled(Box)`
   width: 100%;
-  height: 4px;
+  height: 3px;
   background: #2e333c;
   border-radius: 2px;
   overflow: hidden;

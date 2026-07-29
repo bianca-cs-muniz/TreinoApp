@@ -17,14 +17,13 @@ import {
   CarregandoTexto,
   CartaoCronometro,
   CartaoDescanso,
-  EspacadorRodape,
+  LinhaInferiorDescanso,
   LinhaSuperiorCabecalho,
   LinkEditarTreino,
   ListaExerciciosTreino,
   PreenchimentoBarraDescanso,
   RodapeFixoConteudo,
   RodapeFixoExecucao,
-  RotuloDescansoTitulo,
   TituloTreino,
   ValorCronometro,
   ValorDescanso,
@@ -88,6 +87,16 @@ export const ComecarTreinoPage = () => {
           <TituloTreino>{treino.name}</TituloTreino>
         </CabecalhoTreino>
 
+        {sessao && (
+          <CartaoCronometro>
+            <ValorCronometro>{formatarMMSS(segundosDecorridos)}</ValorCronometro>
+            <BotaoCronometro $rodando={cronometroRodando} onClick={() => setCronometroRodando(!cronometroRodando)}>
+              {cronometroRodando ? <PauseIcon sx={{ fontSize: 18 }} /> : <PlayArrowIcon sx={{ fontSize: 18 }} />}
+              {cronometroRodando ? "Pausar" : "Retomar"}
+            </BotaoCronometro>
+          </CartaoCronometro>
+        )}
+
         <ListaExerciciosTreino>
           {treino.exercises.map((ex) => (
             <ExercicioExecucaoCard
@@ -103,33 +112,19 @@ export const ComecarTreinoPage = () => {
           ))}
         </ListaExerciciosTreino>
 
-        <EspacadorRodape />
-
         <RodapeFixoExecucao>
           <RodapeFixoConteudo>
-            {sessao && (
-              <CartaoCronometro>
-                <ValorCronometro>{formatarMMSS(segundosDecorridos)}</ValorCronometro>
-                <BotaoCronometro
-                  $rodando={cronometroRodando}
-                  onClick={() => setCronometroRodando(!cronometroRodando)}
-                >
-                  {cronometroRodando ? <PauseIcon sx={{ fontSize: 18 }} /> : <PlayArrowIcon sx={{ fontSize: 18 }} />}
-                  {cronometroRodando ? "Pausar" : "Retomar"}
-                </BotaoCronometro>
-              </CartaoCronometro>
-            )}
-
             {descanso && (
               <CartaoDescanso>
-                <RotuloDescansoTitulo>DESCANSO</RotuloDescansoTitulo>
-                <ValorDescanso>{formatarMMSS(descanso.segundosRestantes)}</ValorDescanso>
                 <BarraProgressoDescanso>
                   <PreenchimentoBarraDescanso
                     style={{ width: `${(descanso.segundosRestantes / descanso.totalSeg) * 100}%` }}
                   />
                 </BarraProgressoDescanso>
-                <BotaoPularDescanso onClick={pularDescanso}>Pular descanso</BotaoPularDescanso>
+                <LinhaInferiorDescanso>
+                  <ValorDescanso>{formatarMMSS(descanso.segundosRestantes)}</ValorDescanso>
+                  <BotaoPularDescanso onClick={pularDescanso}>Pular</BotaoPularDescanso>
+                </LinhaInferiorDescanso>
               </CartaoDescanso>
             )}
 
