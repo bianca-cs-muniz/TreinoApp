@@ -5,6 +5,7 @@ export interface HeatCell {
   row: number;
   active: boolean;
   dateLabel: string;
+  isDomingo: boolean;
 }
 
 export interface MonthLabel {
@@ -65,6 +66,7 @@ export const buildYearHeatmap = (year: number, activeDates: Set<string>, today: 
       row,
       active,
       dateLabel: d.toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit", year: "numeric" }),
+      isDomingo: d.getDay() === 0,
     });
 
     if (d.getDate() === 1 && !seenMonths.has(d.getMonth())) {

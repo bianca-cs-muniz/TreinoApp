@@ -1,6 +1,7 @@
 import DeleteIcon from "@mui/icons-material/Delete";
 import AccessTimeIcon from "@mui/icons-material/AccessTime";
 import { SelectCustomizado } from "../../../../../utils/components/selectCustomizado";
+import { ImagemExercicioComModal } from "../../../../../utils/components/imagemExercicio";
 import { ExercicioRascunho, SerieRascunho } from "../../controller";
 import { ISugestaoExercicio } from "../../service";
 import {
@@ -14,7 +15,6 @@ import {
   ColunaPesoTitulo,
   ColunaRepeticoesTitulo,
   ColunaSerieTitulo,
-  ImagemExercicio,
   ItemSugestao,
   LinhaDescanso,
   LinhaSerie,
@@ -25,7 +25,6 @@ import {
   NomeExercicio,
   RotuloDescanso,
   RotuloSerie,
-  SemFoto,
 } from "../../styles";
 
 const formatarRotuloDescanso = (segundos: number): string => {
@@ -100,9 +99,7 @@ export const CartaoExercicioTreino = ({
       {exercicio.selecionado && (
         <>
           <CabecalhoExercicio>
-            <ImagemExercicio $url={exercicio.imagemUrl}>
-              {!exercicio.imagemUrl && <SemFoto>sem foto</SemFoto>}
-            </ImagemExercicio>
+            <ImagemExercicioComModal url={exercicio.imagemUrl} nome={exercicio.nome} />
             <NomeExercicio>{exercicio.nome}</NomeExercicio>
             <BotaoIcone onClick={() => aoRemover(exercicio.idLocal)}>
               <DeleteIcon sx={{ color: "#fff", fontSize: 20 }} />
@@ -153,6 +150,30 @@ export const CartaoExercicioTreino = ({
           </ListaSeries>
 
           <LinkAdicionarSerie onClick={() => aoAdicionarSerie(exercicio.idLocal)}>+ Adicionar série</LinkAdicionarSerie>
+
+          {/* Campo de observação opcional */}
+          <div style={{ marginTop: 4 }}>
+            <div style={{ fontSize: 11, color: "#75797f", marginBottom: 5, fontWeight: 500 }}>Observação (opcional)</div>
+            <textarea
+              value={exercicio.observacao}
+              onChange={(e) => aoAtualizar(exercicio.idLocal, { observacao: e.target.value })}
+              placeholder="Dica de execução, foco muscular..."
+              rows={2}
+              style={{
+                width: "100%",
+                background: "#14171c",
+                border: "1px solid #2e333c",
+                borderRadius: 8,
+                padding: "9px 11px",
+                color: "#edeae3",
+                fontSize: 12,
+                fontFamily: "Inter, sans-serif",
+                boxSizing: "border-box",
+                resize: "none",
+                lineHeight: 1.5,
+              }}
+            />
+          </div>
         </>
       )}
     </CartaoExercicio>

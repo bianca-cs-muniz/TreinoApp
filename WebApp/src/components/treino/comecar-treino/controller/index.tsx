@@ -17,8 +17,9 @@ export function formatarRotuloDescanso(segundos: number | null) {
 
 export interface EstadoDescanso {
   setLogId: string;
-  segundosRestantes: number;
+  fimDescansoEm: number; // Date.now() + totalSeg * 1000
   totalSeg: number;
+  segundosRestantes: number;
 }
 
 function tocarBipDescanso() {
@@ -40,9 +41,40 @@ function tocarBipDescanso() {
   }
 }
 
-function notificarFimDescanso() {
-  if (typeof Notification === "undefined" || Notification.permission !== "granted") return;
-  new Notification("Descanso terminado", { body: "Hora de continuar a série!" });
+/** Envia notificação via SW (funciona em background) ou fallback para Notification API */
+async function agendarNotificacaoDescanso(delayMs: number) {
+  if (typeof navigator === "undefined" || !("serviceWorker" in navigator)) return;
+  const registro = await navigator.serviceWorker.ready.catch(() => null);
+  if (registro?.active) {
+    registro.active.postMessage({
+      type: "SCHEDULE_NOTIFICATION",
+      delayMs,
+      title: "Descanso terminado",
+      body: "Hora de continuar a série! 💪",
+    });
+    return;
+  }
+  // fallback: Notification API direta (só funciona em primeiro plano)
+  if (typeof Notification !== "undefined" && Notification.permission === "granted") {
+    setTimeout(() => {
+      new Notification("Descanso terminado", { body: "Hora de continuar a série! 💪" });
+    }, delayMs);
+  }
+}
+
+async function cancelarNotificacaoDescanso() {
+  if (typeof navigator === "undefined" || !("serviceWorker" in navigator)) return;
+  const registro = await navigator.serviceWorker.ready.catch(() => null);
+  registro?.active?.postMessage({ type: "CANCEL_NOTIFICATION" });
+}
+
+async function registrarServiceWorker() {
+  if (typeof navigator === "undefined" || !("serviceWorker" in navigator)) return;
+  try {
+    await navigator.serviceWorker.register("/sw.js");
+  } catch {
+    // SW não disponível (ex: http:// local sem HTTPS) — segue sem ele.
+  }
 }
 
 export function controllerComecarTreino() {
@@ -62,6 +94,11 @@ export function controllerComecarTreino() {
   const [comentario, setComentario] = useState("");
   const [erroSnackbar, setErroSnackbar] = useState<string | null>(null);
   const [verificandoSessaoAtiva, setVerificandoSessaoAtiva] = useState(true);
+
+  // Registra o Service Worker ao montar
+  useEffect(() => {
+    registrarServiceWorker();
+  }, []);
 
   useEffect(() => {
     if (id) ComecarTreinoService.buscarTreino(id).then(setTreino).catch(console.error);
@@ -111,8 +148,24 @@ export function controllerComecarTreino() {
       setSegundosDecorridos(Math.max(decorrido, 0));
     }
 
+    // Ao voltar ao foco: recalcula o descanso restante a partir do timestamp absoluto
+    function recalcularDescanso() {
+      setDescanso((prev) => {
+        if (!prev) return null;
+        const restante = Math.max(0, Math.round((prev.fimDescansoEm - Date.now()) / 1000));
+        if (restante <= 0) {
+          tocarBipDescanso();
+          return null;
+        }
+        return { ...prev, segundosRestantes: restante };
+      });
+    }
+
     function aoMudarVisibilidade() {
-      if (document.visibilityState === "visible") recalcularSegundosDecorridos();
+      if (document.visibilityState === "visible") {
+        recalcularSegundosDecorridos();
+        recalcularDescanso();
+      }
     }
 
     document.addEventListener("visibilitychange", aoMudarVisibilidade);
@@ -126,21 +179,27 @@ export function controllerComecarTreino() {
     };
   }, [sessao, cronometroRodando]);
 
+  // Timer de descanso usando timestamp absoluto — não depende do JS rodar em background.
+  // A cada segundo apenas decrementa a contagem visual; a lógica real usa fimDescansoEm.
   useEffect(() => {
     if (!descanso) return;
     if (descanso.segundosRestantes <= 0) {
       tocarBipDescanso();
-      notificarFimDescanso();
       setDescanso(null);
       return;
     }
     const timeout = setTimeout(() => {
-      setDescanso((prev) => (prev ? { ...prev, segundosRestantes: prev.segundosRestantes - 1 } : null));
+      setDescanso((prev) => {
+        if (!prev) return null;
+        const restante = Math.max(0, Math.round((prev.fimDescansoEm - Date.now()) / 1000));
+        return { ...prev, segundosRestantes: restante };
+      });
     }, 1000);
     return () => clearTimeout(timeout);
   }, [descanso]);
 
   function pularDescanso() {
+    cancelarNotificacaoDescanso();
     setDescanso(null);
   }
 
@@ -177,11 +236,16 @@ export function controllerComecarTreino() {
     // marca na hora (otimista) — não espera o servidor responder pra sentir instantâneo.
     atualizarSetLogNaSessao({ ...log, completed, completedAt: completed ? new Date().toISOString() : null });
     if (completed && restSec) {
-      setDescanso({ setLogId: log.id, segundosRestantes: restSec, totalSeg: restSec });
+      const fimDescansoEm = Date.now() + restSec * 1000;
+      setDescanso({ setLogId: log.id, fimDescansoEm, totalSeg: restSec, segundosRestantes: restSec });
+
+      // Pede permissão na primeira vez e agenda notificação via SW (funciona em background)
       if (typeof Notification !== "undefined" && Notification.permission === "default") {
-        Notification.requestPermission().catch(() => {});
+        await Notification.requestPermission().catch(() => {});
       }
+      agendarNotificacaoDescanso(restSec * 1000);
     } else if (!completed && descanso?.setLogId === log.id) {
+      cancelarNotificacaoDescanso();
       setDescanso(null);
     }
 
@@ -190,7 +254,10 @@ export function controllerComecarTreino() {
       atualizarSetLogNaSessao(atualizado);
     } catch (err: any) {
       atualizarSetLogNaSessao(log); // reverte pro estado anterior
-      if (completed && restSec) setDescanso(null);
+      if (completed && restSec) {
+        cancelarNotificacaoDescanso();
+        setDescanso(null);
+      }
       setErroSnackbar(err?.message || "Não foi possível marcar a série. Tente novamente.");
     }
   }
@@ -205,14 +272,15 @@ export function controllerComecarTreino() {
     }
   }
 
-  async function confirmarFinalizacao() {
+  async function confirmarFinalizacao(segundosAjustados?: number) {
     if (!sessao || finalizando) return;
     setFinalizando(true);
     setErroSnackbar(null);
     try {
+      const duracao = segundosAjustados ?? segundosDecorridos;
       const sessaoFinalizada = await ComecarTreinoService.finalizarSessao(
         sessao.id,
-        segundosDecorridos,
+        duracao,
         comentario.trim() || undefined
       );
       setCronometroRodando(false);

@@ -31,6 +31,7 @@ export const HeatmapAnoProgresso = ({ heatmap }: HeatmapAnoProgressoProps) => {
         </GradeMesesRotulos>
         <LinhaHeatmap>
           <RotulosDiasSemana>
+            <div style={{ gridRow: 1, color: "rgba(0, 200, 83, 0.7)" }}>Dom</div>
             <div style={{ gridRow: 2 }}>Seg</div>
             <div style={{ gridRow: 4 }}>Qua</div>
             <div style={{ gridRow: 6 }}>Sex</div>
@@ -40,7 +41,8 @@ export const HeatmapAnoProgresso = ({ heatmap }: HeatmapAnoProgressoProps) => {
               <CelulaHeatmap
                 key={i}
                 $ativa={cell.active}
-                title={`${cell.dateLabel}${cell.active ? " — treino concluído" : ""}`}
+                $domingo={cell.isDomingo}
+                title={`${cell.dateLabel}${cell.isDomingo ? " (folga)" : ""}${cell.active ? " — treino concluído" : ""}`}
                 style={{ gridColumn: cell.col, gridRow: cell.row }}
               />
             ))}
@@ -54,6 +56,9 @@ export const HeatmapAnoProgresso = ({ heatmap }: HeatmapAnoProgressoProps) => {
           <SwatchLegenda key={i} style={{ background: cor }} />
         ))}
         <TextoLegenda>Mais</TextoLegenda>
+        <span style={{ width: 1, height: 10, background: "#2e333c", margin: "0 4px" }} />
+        <SwatchLegenda style={{ background: "rgba(0, 200, 83, 0.22)", border: "1px solid rgba(0, 200, 83, 0.45)" }} />
+        <TextoLegenda>Dom (folga)</TextoLegenda>
       </LegendaHeatmap>
     </CartaoHeatmap>
   );

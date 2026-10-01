@@ -75,7 +75,7 @@ export const RotulosDiasSemana = styled(Box)`
   gap: 3px;
   font-size: 9px;
   color: #75797f;
-  width: 16px;
+  width: 22px;
 `;
 
 export const GradeCelulas = styled(Box)`
@@ -85,14 +85,15 @@ export const GradeCelulas = styled(Box)`
 `;
 
 export const CelulaHeatmap = styled(Box, {
-  shouldForwardProp: (prop) => prop !== "$ativa",
-})<{ $ativa: boolean }>`
+  shouldForwardProp: (prop) => prop !== "$ativa" && prop !== "$domingo",
+})<{ $ativa: boolean; $domingo: boolean }>`
   width: 11px;
   height: 11px;
   border-radius: 2px;
-  background: ${({ $ativa }) => ($ativa ? "#ff5a36" : "#2e333c")};
+  background: ${({ $ativa, $domingo }) =>
+    $ativa ? "#ff5a36" : $domingo ? "rgba(0, 200, 83, 0.22)" : "#2e333c"};
+  border: ${({ $domingo, $ativa }) => (!$ativa && $domingo ? "1px solid rgba(0, 200, 83, 0.45)" : "none")};
 `;
-
 export const LegendaHeatmap = styled(Box)`
   display: flex;
   align-items: center;

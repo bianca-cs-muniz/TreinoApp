@@ -16,6 +16,7 @@ export interface ExercicioRascunho {
   termoBusca: string;
   sugestoes: ISugestaoExercicio[];
   descansoSeg: number;
+  observacao: string;
   series: SerieRascunho[];
 }
 
@@ -27,6 +28,7 @@ function criarExercicioVazio(): ExercicioRascunho {
     termoBusca: "",
     sugestoes: [],
     descansoSeg: 60,
+    observacao: "",
     series: [{ peso: "", repeticoes: "" }],
   };
 }
@@ -40,6 +42,7 @@ function mapearExercicioExistente(ex: IExercicioTreinoExistente): ExercicioRascu
     termoBusca: "",
     sugestoes: [],
     descansoSeg: ex.restSec ?? 60,
+    observacao: (ex as any).notes ?? "",
     series: ex.sets.map((s) => ({
       peso: s.weightKg != null ? String(s.weightKg) : "",
       repeticoes: s.reps != null ? String(s.reps) : "",
@@ -174,6 +177,7 @@ export function controllerTreino(workoutIdParaEditar?: string) {
           name: ex.nome,
           externalApiId: ex.externalApiId,
           restSec: ex.descansoSeg,
+          notes: ex.observacao.trim() || undefined,
           sets: ex.series
             .filter((s) => s.peso || s.repeticoes)
             .map((s) => ({

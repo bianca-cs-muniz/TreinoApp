@@ -2,6 +2,7 @@ import AccessTimeIcon from "@mui/icons-material/AccessTime";
 import CheckIcon from "@mui/icons-material/Check";
 import { IExercicioTreino, ISetLog } from "../../service";
 import { formatarRotuloDescanso } from "../../controller";
+import { ImagemExercicioComModal } from "../../../../../utils/components/imagemExercicio";
 import {
   BotaoConcluirSerie,
   CabecalhoExercicioExecucao,
@@ -10,7 +11,6 @@ import {
   CartaoExercicioExecucao,
   ColunaPesoRepTitulo,
   ColunaSerieTitulo,
-  ImagemExercicioExecucao,
   InfoExercicioExecucao,
   LinhaSerieExecucao,
   ListaSeriesExecucao,
@@ -45,7 +45,7 @@ export const ExercicioExecucaoCard = ({
   return (
     <CartaoExercicioExecucao>
       <CabecalhoExercicioExecucao>
-        <ImagemExercicioExecucao $url={imagemUrl} />
+        <ImagemExercicioComModal url={imagemUrl} nome={exercicio.name} />
         <InfoExercicioExecucao>
           <NomeExercicioExecucao>{exercicio.name}</NomeExercicioExecucao>
           {rotuloDescanso && (

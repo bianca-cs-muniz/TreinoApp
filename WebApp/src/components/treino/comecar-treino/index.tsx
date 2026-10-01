@@ -142,7 +142,7 @@ export const ComecarTreinoPage = () => {
 
         {mostrarModalFinalizar && (
           <ModalFinalizarTreino
-            duracaoFormatada={formatarMMSS(segundosDecorridos)}
+            segundosDecorridos={segundosDecorridos}
             comentario={comentario}
             setComentario={setComentario}
             finalizando={finalizando}
