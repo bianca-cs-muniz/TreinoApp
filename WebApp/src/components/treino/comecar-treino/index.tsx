@@ -54,6 +54,8 @@ export const ComecarTreinoPage = () => {
     alternarConcluidoSerie,
     editarSerieLog,
     confirmarFinalizacao,
+    avisoTempo,
+    dispensarAvisoTempo,
   } = controllerComecarTreino();
 
   if (!treino) {
@@ -124,6 +126,17 @@ export const ComecarTreinoPage = () => {
                 <LinhaInferiorDescanso>
                   <ValorDescanso>{formatarMMSS(descanso.segundosRestantes)}</ValorDescanso>
                   <BotaoPularDescanso onClick={pularDescanso}>Pular</BotaoPularDescanso>
+                </LinhaInferiorDescanso>
+              </CartaoDescanso>
+            )}
+
+            {avisoTempo && !descanso && (
+              <CartaoDescanso>
+                <LinhaInferiorDescanso>
+                  <span style={{ fontSize: 13, color: "#edeae3", lineHeight: 1.4 }}>
+                    {avisoTempo}
+                  </span>
+                  <BotaoPularDescanso onClick={dispensarAvisoTempo}>Ok</BotaoPularDescanso>
                 </LinhaInferiorDescanso>
               </CartaoDescanso>
             )}

@@ -45,7 +45,6 @@ export const ModalFinalizarTreino = ({
 }: ModalFinalizarTreinoProps) => {
   const [tempoEditado, setTempoEditado] = useState(formatarMMSS(segundosDecorridos));
   const [erroTempo, setErroTempo] = useState(false);
-  const passouUmaHora = segundosDecorridos >= 3600;
 
   function handleConfirmar() {
     const segundosAjustados = parseMMSS(tempoEditado);
@@ -91,25 +90,7 @@ export const ModalFinalizarTreino = ({
               Formato inválido. Use M:SS (ex: 45:30)
             </div>
           )}
-          {passouUmaHora && !erroTempo && (
-            <div
-              style={{
-                display: "flex",
-                alignItems: "center",
-                gap: 6,
-                marginTop: 8,
-                padding: "7px 12px",
-                borderRadius: 8,
-                background: "rgba(255, 160, 0, 0.12)",
-                border: "1px solid rgba(255, 160, 0, 0.35)",
-              }}
-            >
-              <span style={{ fontSize: 16, lineHeight: 1 }}>⚠️</span>
-              <span style={{ fontSize: 12, color: "#ffa000", lineHeight: 1.4 }}>
-                Mais de 1 hora de treino! Confira se esqueceu de parar o cronômetro.
-              </span>
-            </div>
-          )}
+
         </CabecalhoModalFinalizar>
 
         <CampoComentario>

@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import ComecarTreinoService, { ITreino, ISessaoTreino, ISetLog } from "../service";
 
@@ -62,10 +62,38 @@ async function agendarNotificacaoDescanso(delayMs: number) {
   }
 }
 
+
 async function cancelarNotificacaoDescanso() {
   if (typeof navigator === "undefined" || !("serviceWorker" in navigator)) return;
   const registro = await navigator.serviceWorker.ready.catch(() => null);
   registro?.active?.postMessage({ type: "CANCEL_NOTIFICATION" });
+}
+
+/** Agenda notificações push para 1h, 1h30 e 2h a partir de startedAt (timestamp ms).
+ *  Usa timestamps absolutos — funciona mesmo se o SW for reiniciado antes de disparar. */
+async function agendarNotificacoesTreino(startedAtMs: number) {
+  if (typeof navigator === "undefined" || !("serviceWorker" in navigator)) return;
+  const registro = await navigator.serviceWorker.ready.catch(() => null);
+  if (!registro?.active) return;
+
+  if (typeof Notification !== "undefined" && Notification.permission === "default") {
+    await Notification.requestPermission().catch(() => {});
+  }
+  if (typeof Notification !== "undefined" && Notification.permission !== "granted") return;
+
+  const marcos = [
+    { fireAtMs: startedAtMs + 3600 * 1000, title: "1 hora de treino! 🏋️", body: "Ainda na academia? Confere se esqueceu de parar o cronômetro.", tag: "treino-1h" },
+    { fireAtMs: startedAtMs + 5400 * 1000, title: "1h 30min de treino! 💪", body: "Tudo bem? Lembra de finalizar o treino quando terminar.", tag: "treino-1h30" },
+    { fireAtMs: startedAtMs + 7200 * 1000, title: "2 horas de treino! ⏱️", body: "Treino muito longo? Veja se o cronômetro está rodando sem querer.", tag: "treino-2h" },
+  ];
+
+  registro.active.postMessage({ type: "SCHEDULE_TREINO_TIMERS", marcos });
+}
+
+async function cancelarNotificacoesTreino() {
+  if (typeof navigator === "undefined" || !("serviceWorker" in navigator)) return;
+  const registro = await navigator.serviceWorker.ready.catch(() => null);
+  registro?.active?.postMessage({ type: "CANCEL_TREINO_TIMERS" });
 }
 
 async function registrarServiceWorker() {
@@ -76,6 +104,7 @@ async function registrarServiceWorker() {
     // SW não disponível (ex: http:// local sem HTTPS) — segue sem ele.
   }
 }
+
 
 export function controllerComecarTreino() {
   const { id } = useParams();
@@ -94,6 +123,8 @@ export function controllerComecarTreino() {
   const [comentario, setComentario] = useState("");
   const [erroSnackbar, setErroSnackbar] = useState<string | null>(null);
   const [verificandoSessaoAtiva, setVerificandoSessaoAtiva] = useState(true);
+  const [avisoTempo, setAvisoTempo] = useState<string | null>(null);
+  const marcosDisparadosRef = useRef<Set<number>>(new Set());
 
   // Registra o Service Worker ao montar
   useEffect(() => {
@@ -113,6 +144,8 @@ export function controllerComecarTreino() {
         const decorrido = Math.floor((Date.now() - new Date(ativa.startedAt).getTime()) / 1000);
         setSegundosDecorridos(Math.max(decorrido, 0));
         setCronometroRodando(true);
+        // Reagenda as notificações de tempo para a sessão que já estava ativa
+        agendarNotificacoesTreino(new Date(ativa.startedAt).getTime());
       })
       .catch(() => {
         // sem sessão ativa — segue o fluxo normal de "Começar treino".
@@ -137,6 +170,23 @@ export function controllerComecarTreino() {
     const interval = setInterval(() => setSegundosDecorridos((s) => s + 1), 1000);
     return () => clearInterval(interval);
   }, [cronometroRodando, sessao?.finishedAt]);
+
+  // Dispara aviso na tela nos marcos de 1h, 1h30min e 2h (cada um uma única vez)
+  useEffect(() => {
+    if (!cronometroRodando) return;
+    const marcos = [
+      { seg: 3600,   msg: "⏱️ 1 hora de treino! Esqueceu de parar?" },
+      { seg: 5400,   msg: "⏱️ 1h 30min de treino! Tudo bem?" },
+      { seg: 7200,   msg: "⏱️ 2 horas de treino! Confere o cronômetro." },
+    ];
+    for (const marco of marcos) {
+      if (segundosDecorridos >= marco.seg && !marcosDisparadosRef.current.has(marco.seg)) {
+        marcosDisparadosRef.current.add(marco.seg);
+        setAvisoTempo(marco.msg);
+        break; // mostra um por vez
+      }
+    }
+  }, [segundosDecorridos, cronometroRodando]);
 
   // no PWA/iOS o JS para de rodar quando a tela trava ou o app vai pra segundo plano —
   // o setInterval acima fica "atrasado". Ao voltar, recalcula o tempo real a partir de
@@ -212,6 +262,7 @@ export function controllerComecarTreino() {
       setSessao(novaSessao);
       setSegundosDecorridos(0);
       setCronometroRodando(true);
+      agendarNotificacoesTreino(new Date(novaSessao.startedAt).getTime());
     } catch (err: any) {
       setErroSnackbar(err?.message || "Não foi possível iniciar o treino.");
     } finally {
@@ -276,6 +327,7 @@ export function controllerComecarTreino() {
     if (!sessao || finalizando) return;
     setFinalizando(true);
     setErroSnackbar(null);
+    cancelarNotificacoesTreino(); // cancela push de 1h/1h30/2h antes de finalizar
     try {
       const duracao = segundosAjustados ?? segundosDecorridos;
       const sessaoFinalizada = await ComecarTreinoService.finalizarSessao(
@@ -319,5 +371,7 @@ export function controllerComecarTreino() {
     alternarConcluidoSerie,
     editarSerieLog,
     confirmarFinalizacao,
+    avisoTempo,
+    dispensarAvisoTempo: () => setAvisoTempo(null),
   };
 }
